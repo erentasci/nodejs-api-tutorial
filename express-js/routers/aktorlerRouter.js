@@ -1,80 +1,122 @@
 const router = require("express").Router();
 let data = require("../data.js");
 
-router.get("/", (req, res) => {
-  res.status(200).json(data);
-});
+const Aktor = require("../data/data-model.js");
 
-let next_id = 4;
+router.get("/", (req, res, next) => {
+  Aktor.findAktor()
+    .then((aktorler) => {
+      res.status(200).json(aktorler);
+    })
+    .catch((error) => {
+      next({
+        statusCode: 500,
+        errorMessage: "Aktorler alinirken hata olustu.",
+        error,
+      });
+    });
+});
 
 router.post("/", (req, res, next) => {
-  let yeni_aktor = req.body; // Body ile aktor aldık
+  const yeniAktor = req.body;
 
-  if (!yeni_aktor.isim) {
+  if (!yeniAktor.isim) {
     next({
       statusCode: 400,
-      errorMessage: "Aktör ismi girmelisiniz!",
+      errorMessage: "Aktor eklemek icin isim girmelisiniz.",
     });
-  } else if (yeni_aktor.isim && !yeni_aktor.filmler) {
+  } else {
+    Aktor.addAktor(yeniAktor)
+      .then((added) => {
+        res.status(201).json(added);
+      })
+      .catch((error) => {
+        next({
+          statusCode: 500,
+          errorMessage: "Aktor eklerken hata olustu.",
+          error,
+        });
+      });
+  }
+});
+
+router.patch("/:id", (req, res, next) => {
+  const { id } = req.params;
+  const updatedAktor = req.body;
+
+  if (!updatedAktor.isim) {
     next({
       statusCode: 400,
-      errorMessage: "Aktör için film girmelisiniz!",
+      errorMessage: "Aktor ismi bos olamaz.",
     });
   } else {
-    yeni_aktor.id = next_id; // id verildi
-    next_id++; // id arttırıldı
-    data.push(yeni_aktor); // data'ya aktor eklendi
-    res.status(201).json(yeni_aktor); // 201: Created  yeni_aktor.id = next_id; // id verildi
+    Aktor.updateAktor(updatedAktor, id)
+      .then((updated) => {
+        res.status(200).json(updated);
+      })
+      .catch((error) => {
+        next({
+          statusCode: 500,
+          errorMessage: "Aktor duzenlenirken hata olustu.",
+          error,
+        });
+      });
   }
 });
 
-router.delete("/:id", (req, res) => {
-  const { id } = req.params; // id'yi aldık paramstan - string olarak geliyor
-  const aktor = data.find((aktor) => {
-    return aktor.id === parseInt(id); // integer yaptık
-  });
+router.delete("/:id", (req, res, next) => {
+  const { id } = req.params;
 
-  if (aktor) {
-    data = data.filter((aktor) => {
-      return aktor.id !== parseInt(id);
+  Aktor.findAktorById(id)
+    .then((silinecekAktor) => {
+      Aktor.deleteAktor(id)
+        .then((deleted) => {
+          if (deleted) {
+            res.status(204).end();
+          }
+          next({
+            statusCode: 400,
+            errorMessage: "Silmeye calistiginiz aktor sistemde mevcut degil.",
+          });
+        })
+        .catch((error) => {
+          next({
+            statusCode: 500,
+            errorMessage: "Aktor silinirken hata olustu.",
+            error,
+          });
+        });
+    })
+    .catch((error) => {
+      next({
+        statusCode: 500,
+        errorMessage: "Aktor bulunurken hata olustu.",
+        error,
+      });
     });
-    res.status(204).end(); // 204: Başarılı olarak silindi
-  } else {
-    res.status(404).json({ errorMessage: "Aradığınız aktör bulunamadı." });
-  }
 });
 
-router.put("/:id", (req, res) => {
+router.get("/:id", (req, res, next) => {
   const { id } = req.params;
-  const aktor = data.find((aktor) => {
-    return aktor.id === parseInt(id);
-  });
-  if (aktor.id && aktor.isim) {
-    aktor.isim = req.body.isim;
-    // console.log(aktor.isim);
-    aktor.filmler = req.body.filmler;
-    // console.log(aktor.filmler);
-    res.status(200).json(aktor);
-  } else {
-    res.status(404).json({ errorMessage: "Aktör eklenemedi." });
-  }
-});
 
-// Get Methodu sadece tarayıcıda çalışır..
-router.get("/:id", (req, res) => {
-  //   const id = req.params.id;
-  // console.log("req.params: ", req.params); // GET (genelde)
-  // console.log("req.query", req.query); // GET (genelde)
-  console.log("req.body", req.body); // POST (genelde)
-  const { id } = req.params;
-  const aktor = data.find((aktor) => {
-    return aktor.id === parseInt(id);
-  });
-  if (aktor) {
-    res.status(200).json(aktor);
-  } else {
-    res.status(404).send("Aradığınız aktör bulunamadı...");
-  }
+  Aktor.findAktorById(id)
+    .then((aktor) => {
+      if (aktor) {
+        res.status(200).json(aktor);
+      } else {
+        next({
+          statusCode: 400,
+          erorMessage: "Aktor bulunamadi.",
+        });
+      }
+    })
+    .catch((error) => {
+      next({
+        statusCode: 500,
+        errorMessage: "Aktor bulunurken hata olustu.",
+        error,
+      });
+    });
 });
 
 module.exports = router;
