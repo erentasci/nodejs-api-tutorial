@@ -1,8 +1,9 @@
 import express = require("express");
 const { createClient } = require("@supabase/supabase-js");
 
-const supabaseUrl = "YOUR SUPABASE URL";
-const supabaseKey = "YOUR SUPABASE KEY";
+const supabaseUrl = "https://jnvlkmlizxcmqzihupyh.supabase.co";
+const supabaseKey =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpudmxrbWxpenhjbXF6aWh1cHloIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODMyMTI3MDIsImV4cCI6MTk5ODc4ODcwMn0.QOOB-OekTzWAeeEVF4-ar04ALzwWOEwZNFPyORJxNdA";
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -63,6 +64,7 @@ app.post("/todos", async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
 app.put("/todos/:id", async (req, res) => {
   const { id } = req.params;
   const { title, description } = req.body;
@@ -81,6 +83,8 @@ app.put("/todos/:id", async (req, res) => {
   }
 });
 
+=======
+>>>>>>> a436c6e1b2cdbbcee49a7a0b577e8afedbca958a
 app.listen(5000, () => {
   console.log("Server is running on port 5000");
 });
