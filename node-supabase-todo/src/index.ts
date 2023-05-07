@@ -25,17 +25,56 @@ app.get("/todos", async (req, res) => {
   }
 });
 
-app.get("/todos/:id", async (req, res) => {
+app.get("/todos/:id", async (req, res, next) => {
   const { id } = req.params;
   let { data: todo, error } = await supabase
     .from("todos")
     .select("*")
     .eq("id", id);
-  if (!todo) {
-    console.log("No data");
+  if (todo) {
+    console.log("Todo: ", todo);
+  } else {
+    res.status(404).json({ message: "Todo not found" });
   }
   try {
     res.status(200).json(todo);
+  } catch {
+    console.error(error);
+    res.status(500).send("Server error");
+  }
+});
+
+app.post("/todos", async (req, res) => {
+  const { title, description } = req.body;
+
+  const { data, error } = await supabase.from("todos").insert([
+    {
+      title,
+      description,
+    },
+  ]);
+
+  try {
+    console.log("Todo Created!");
+    res.status(201).send("Todo created");
+  } catch {
+    console.error(error);
+    res.status(500).send("Server error");
+  }
+});
+
+app.put("/todos/:id", async (req, res) => {
+  const { id } = req.params;
+  const { title, description } = req.body;
+
+  const { data, error } = await supabase
+    .from("todos")
+    .update({ title, description })
+    .eq("id", id)
+    .select();
+
+  try {
+    res.status(200).json(data);
   } catch {
     console.error(error);
     res.status(500).send("Server error");
